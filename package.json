@@ -6,7 +6,8 @@
     "type": "git",
     "url": "https://github.com/bricksphd/add-scene"
   },
-  "description": "Adds a scene JS file next to an HTML file and injects a script tag before </body>.",
+  "license": "MIT",
+  "description": "Scaffold Scene, Game Object, and Component JS files from a .html file's context menu, with a matching <script> tag inserted automatically.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.85.0"
