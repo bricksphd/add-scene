@@ -1,0 +1,83 @@
+{
+  "name": "add-scene",
+  "displayName": "Add Scene",
+  "description": "Adds a scene JS file next to an HTML file and injects a script tag before </body>.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "addScene.addScene",
+        "title": "Add Scene"
+      },
+      {
+        "command": "addScene.addGameObject",
+        "title": "Add Game Object"
+      },
+      {
+        "command": "addScene.addComponent",
+        "title": "Add Component"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+        "command": "addScene.addScene",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@1"
+        },
+        {
+        "command": "addScene.addGameObject",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@2"
+        },
+        {
+        "command": "addScene.addComponent",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@3"
+        }
+      ],
+      "editor/context": [
+        {
+        "command": "addScene.addScene",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@1"
+        },
+        {
+        "command": "addScene.addGameObject",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@2"
+        },
+        {
+        "command": "addScene.addComponent",
+        "when": "resourceExtname == .html",
+        "group": "1_addScene@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "mocha",
+    "test:unit": "mocha --spec out/test/unit/**/*.test.js",
+    "test:integration": "npm run pretest && node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.9",
+    "mocha": "^10.4.0",
+    "typescript": "^5.4.5"
+  }
+}

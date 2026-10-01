@@ -1,0 +1,9 @@
+src/**
+node_modules/**
+.vscode-test/**
+.vscode/**
+scripts/**
+out/test/**
+testFixture/**
+**/*.map
+*.vsix
