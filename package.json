@@ -1,6 +1,11 @@
 {
   "name": "add-scene",
   "displayName": "Add Scene",
+  "publisher": "bricksphd",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bricksphd/add-scene"
+  },
   "description": "Adds a scene JS file next to an HTML file and injects a script tag before </body>.",
   "version": "0.0.1",
   "engines": {
