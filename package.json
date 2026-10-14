@@ -1,7 +1,8 @@
 {
-  "name": "add-scene",
-  "displayName": "Add Scene",
-  "publisher": "bricksphd",
+  "name": "cs2510-game-engine",
+  "displayName": "CS2510 Game Engine",
+  "icon": "media/icon.png",
+  "publisher": "bricksphd01",
   "repository": {
     "type": "git",
     "url": "https://github.com/bricksphd/add-scene"
@@ -21,19 +22,79 @@
     "commands": [
       {
         "command": "addScene.addScene",
-        "title": "Add Scene"
+        "title": "➕ Add Scene",
+        "icon": "media/plus.svg"
       },
       {
         "command": "addScene.addGameObject",
-        "title": "Add Game Object"
+        "title": "➕ Add Game Object",
+        "icon": "media/plus.svg"
       },
       {
         "command": "addScene.addComponent",
-        "title": "Add Component"
-      }
+        "title": "➕ Add Component",
+        "icon": "media/plus.svg"
+      },
+      {
+        "command": "addScene.createNewGame",
+        "title": "🎮 Create New Game"
+      },
+      { "command": "addScene.deleteClass", "title": "🗑️ Delete Class" },
+      { "command": "addScene.deleteComponent", "title": "🗑️ Delete Component" },
+      { "command": "addScene.deleteGameObject", "title": "🗑️ Delete GameObject" },
+      { "command": "addScene.deleteScene", "title": "🗑️ Delete Scene" },
+      { "command": "addScene.renameClass", "title": "✏️ Rename Class" },
+      { "command": "addScene.renameComponent", "title": "✏️ Rename Component" },
+      { "command": "addScene.renameGameObject", "title": "✏️ Rename GameObject" },
+      { "command": "addScene.renameScene", "title": "✏️ Rename Scene" }
     ],
     "menus": {
       "explorer/context": [
+        {
+          "command": "addScene.renameClass",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && !(resourceDirname =~ /[\\\\/](components|gameObjects|scenes)$/)",
+          "group": "1_addScene@5"
+        },
+        {
+          "command": "addScene.renameComponent",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]components$/",
+          "group": "1_addScene@5"
+        },
+        {
+          "command": "addScene.renameGameObject",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]gameObjects$/",
+          "group": "1_addScene@5"
+        },
+        {
+          "command": "addScene.renameScene",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]scenes$/",
+          "group": "1_addScene@5"
+        },
+        {
+          "command": "addScene.deleteClass",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && !(resourceDirname =~ /[\\\\/](components|gameObjects|scenes)$/)",
+          "group": "1_addScene@6"
+        },
+        {
+          "command": "addScene.deleteComponent",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]components$/",
+          "group": "1_addScene@6"
+        },
+        {
+          "command": "addScene.deleteGameObject",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]gameObjects$/",
+          "group": "1_addScene@6"
+        },
+        {
+          "command": "addScene.deleteScene",
+          "when": "resourceExtname == .js && !explorerResourceIsFolder && resourceDirname =~ /[\\\\/]scenes$/",
+          "group": "1_addScene@6"
+        },
+        {
+          "command": "addScene.createNewGame",
+          "when": "explorerResourceIsFolder && resourceScheme == file && resourceFilename == games",
+          "group": "1_addScene@4"
+        },
         {
         "command": "addScene.addScene",
         "when": "resourceExtname == .html",

@@ -1,6 +1,11 @@
-import * as assert from 'assert';
+﻿import * as assert from 'assert';
 import {
   validateSceneName,
+  findClassDeclarations,
+  findGameObjectNameString,
+  findScriptSrcRefs,
+  planScriptTagRemoval,
+  replaceSrcFileName,
   findBodyCloseOffset,
   findScriptInsertOffset,
   getBodyIndent,
@@ -264,8 +269,8 @@ suite('buildSceneFileContent', () => {
       [
         'class myScene extends Scene{',
         '    constructor(){',
-        '        super()',
-        '        //Camera.main.backgroundColor = "white"',
+        '        super("white")',
+        '        //this.instantiate(new MainController())',
         '    }',
         '}',
         '',
@@ -282,6 +287,9 @@ suite('buildGameObjectFileContent', () => {
         'class myObject extends GameObject{',
         '    constructor(){',
         '        super("myObject", [], "default")',
+        "        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})",
+        '        //this.addComponent(new myObjectController)',
+        '        //this.transform.scale = new Vector2(1,1)',
         '    }',
         '}',
         '',
@@ -297,6 +305,9 @@ suite('buildComponentFileContent', () => {
       [
         'class myComponent extends Component{',
         '    start(){',
+        '        ',
+        '    }',
+        '    update(){',
         '        ',
         '    }',
         '}',
@@ -401,6 +412,95 @@ suite('game object insertion', () => {
     assert.strictEqual(
       result,
       '<body>\n  <p>hi</p>\n<script src="myComponent.js"></script>\n</body>'
+    );
+  });
+});
+
+suite('findClassDeclarations', () => {
+  test('finds a single class and its name offset', () => {
+    const src = 'class Foo extends Scene{}\n';
+    assert.deepStrictEqual(findClassDeclarations(src), [{ name: 'Foo', nameOffset: 6 }]);
+  });
+
+  test('finds multiple classes', () => {
+    const names = findClassDeclarations('class A{}\nclass B{}').map((c) => c.name);
+    assert.deepStrictEqual(names, ['A', 'B']);
+  });
+
+  test('ignores comments and member access', () => {
+    const src = '// class Old{}\n/* class Older{} */\nclass Foo{ x(){ return this.class } }';
+    assert.deepStrictEqual(findClassDeclarations(src).map((c) => c.name), ['Foo']);
+  });
+});
+
+suite('findScriptSrcRefs', () => {
+  test('finds src values with offsets', () => {
+    const html = '<script src="scenes/A.js"></script>';
+    const [ref] = findScriptSrcRefs(html);
+    assert.strictEqual(ref.value, 'scenes/A.js');
+    assert.strictEqual(html.slice(ref.start, ref.end), 'scenes/A.js');
+  });
+
+  test('supports single quotes and ignores comments and srcless tags', () => {
+    const html = "<!-- <script src=\"x.js\"></script> --><script>1</script><script type='module' src='b.js'></script>";
+    assert.deepStrictEqual(findScriptSrcRefs(html).map((r) => r.value), ['b.js']);
+  });
+});
+
+suite('replaceSrcFileName', () => {
+  test('keeps the folder', () => {
+    assert.strictEqual(replaceSrcFileName('./scenes/A.js', 'B.js'), './scenes/B.js');
+  });
+
+  test('works without a folder', () => {
+    assert.strictEqual(replaceSrcFileName('A.js', 'B.js'), 'B.js');
+  });
+});
+suite('findGameObjectNameString', () => {
+  test('finds the name string in super() of a GameObject', () => {
+    const src = 'class Foo extends GameObject{\n  constructor(){\n    super("Foo", [], "default")\n  }\n}';
+    const r = findGameObjectNameString(src, 'Foo')!;
+    assert.strictEqual(src.slice(r.start, r.end), 'Foo');
+    assert.strictEqual(src[r.start - 1], '"');
+  });
+
+  test('supports single quotes', () => {
+    const src = "class Foo extends GameObject{ constructor(){ super('Foo') } }";
+    assert.ok(findGameObjectNameString(src, 'Foo'));
+  });
+
+  test('ignores a different string, a non-GameObject class, and comments', () => {
+    assert.strictEqual(findGameObjectNameString('class Foo extends GameObject{ constructor(){ super("Bar") } }', 'Foo'), undefined);
+    assert.strictEqual(findGameObjectNameString('class Foo extends Scene{ constructor(){ super("Foo") } }', 'Foo'), undefined);
+    assert.strictEqual(findGameObjectNameString('class Foo extends GameObject{ constructor(){ // super("Foo")\n super("x") } }', 'Foo'), undefined);
+  });
+});
+
+suite('planScriptTagRemoval', () => {
+  const remove = (html: string): string => {
+    const [ref] = findScriptSrcRefs(html);
+    const { start, end } = planScriptTagRemoval(html, ref);
+    return html.slice(0, start) + html.slice(end);
+  };
+
+  test('removes the whole line when the tag is alone on it', () => {
+    assert.strictEqual(
+      remove('<body>\n  <script src="a.js"></script>\n</body>'),
+      '<body>\n</body>'
+    );
+  });
+
+  test('handles CRLF line endings', () => {
+    assert.strictEqual(
+      remove('<body>\r\n  <script src="a.js"></script>\r\n</body>'),
+      '<body>\r\n</body>'
+    );
+  });
+
+  test('removes only the tag when other content shares the line', () => {
+    assert.strictEqual(
+      remove('<p>x</p><script src="a.js"></script><p>y</p>'),
+      '<p>x</p><p>y</p>'
     );
   });
 });

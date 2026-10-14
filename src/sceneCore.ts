@@ -202,8 +202,8 @@ export function buildSceneFileContent(name: string): string {
   return [
     `class ${name} extends Scene{`,
     '    constructor(){',
-    '        super()',
-    '        //Camera.main.backgroundColor = "white"',
+    '        super("white")',
+    '        //this.instantiate(new MainController())',
     '    }',
     '}',
     '',
@@ -218,6 +218,9 @@ export function buildGameObjectFileContent(name: string): string {
     `class ${name} extends GameObject{`,
     '    constructor(){',
     `        super("${name}", [], "default")`,
+    `        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})`,
+    `        //this.addComponent(new ${name}Controller)`,
+    `        //this.transform.scale = new Vector2(1,1)`,
     '    }',
     '}',
     '',
@@ -233,7 +236,140 @@ export function buildComponentFileContent(name: string): string {
     '    start(){',
     '        ',
     '    }',
+    '    update(){',
+    '        ',
+    '    }',
     '}',
     '',
   ].join('\n');
+}
+
+/** A class declaration found in JavaScript source. */
+export interface ClassDeclaration {
+  name: string;
+  /** Offset of the class name within the source text. */
+  nameOffset: number;
+}
+
+/** Blanks out comments (keeping offsets) so they are not parsed as code. */
+function blankComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, (m) =>
+    m.replace(/[^\r\n]/g, ' ')
+  );
+}
+
+/** Finds every `class Name` declaration in the source (comments ignored). */
+export function findClassDeclarations(source: string): ClassDeclaration[] {
+  const code = blankComments(source);
+  const re = /(^|[^\w$.])class\s+([A-Za-z_$][A-Za-z0-9_$]*)/g;
+  const result: ClassDeclaration[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) {
+    const name = match[2];
+    result.push({ name, nameOffset: match.index + match[0].length - name.length });
+  }
+  return result;
+}
+
+/** A src attribute value of a <script> tag. */
+export interface ScriptSrcRef {
+  /** Offset of the first character of the value. */
+  start: number;
+  /** Offset just past the last character of the value. */
+  end: number;
+  value: string;
+}
+
+/** Finds the src values of all <script src="..."> tags (comments ignored). */
+export function findScriptSrcRefs(html: string): ScriptSrcRef[] {
+  const code = html.replace(/<!--[\s\S]*?-->/g, (m) =>
+    m.replace(/[^\r\n]/g, ' ')
+  );
+  const tagRe = /<script\b[^>]*>/gi;
+  const srcRe = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
+  const refs: ScriptSrcRef[] = [];
+  let tag: RegExpExecArray | null;
+  while ((tag = tagRe.exec(code)) !== null) {
+    const src = srcRe.exec(tag[0]);
+    if (!src) {
+      continue;
+    }
+    const value = src[1] !== undefined ? src[1] : src[2];
+    const start = tag.index + src.index + src[0].length - 1 - value.length;
+    refs.push({ start, end: start + value.length, value });
+  }
+  return refs;
+}
+
+/** Replaces the last path segment of a src value, keeping its folder. */
+export function replaceSrcFileName(src: string, newFileName: string): string {
+  const slash = src.lastIndexOf('/');
+  return src.slice(0, slash + 1) + newFileName;
+}
+
+/**
+ * For `class Name extends GameObject`, finds the string passed as the first
+ * argument to super() when it equals the class name (e.g. super("Name", ...)).
+ * Returns the offsets of the text inside the quotes, or undefined.
+ */
+export function findGameObjectNameString(
+  source: string,
+  className: string
+): { start: number; end: number } | undefined {
+  const code = blankComments(source);
+  const escaped = className.replace(/\$/g, '\\$');
+  const decl = new RegExp(
+    `(^|[^\\w$.])class\\s+${escaped}\\s+extends\\s+GameObject(?![\\w$])`
+  ).exec(code);
+  if (!decl) {
+    return undefined;
+  }
+  const rest = code.slice(decl.index + decl[0].length);
+  const sup = new RegExp(`\\bsuper\\s*\\(\\s*(["'\`])${escaped}\\1`).exec(rest);
+  if (!sup) {
+    return undefined;
+  }
+  const start =
+    decl.index + decl[0].length + sup.index + sup[0].length - 1 - className.length;
+  return { start, end: start + className.length };
+}
+
+/**
+ * Computes the range to delete so the whole <script src="..."></script> tag
+ * containing the given src value disappears. When the tag is alone on its
+ * line, the entire line (including its line break) is removed.
+ */
+export function planScriptTagRemoval(
+  html: string,
+  ref: ScriptSrcRef
+): { start: number; end: number } {
+  let start = html.toLowerCase().lastIndexOf('<script', ref.start);
+  if (start < 0) {
+    start = ref.start;
+  }
+  let end = html.indexOf('>', ref.end) + 1;
+  const close = /<\/script\s*>/i.exec(html.slice(end));
+  if (close && /^\s*$/.test(html.slice(end, end + close.index))) {
+    end += close.index + close[0].length;
+  }
+
+  let lineStart = start;
+  while (lineStart > 0 && (html[lineStart - 1] === ' ' || html[lineStart - 1] === '\t')) {
+    lineStart--;
+  }
+  let lineEnd = end;
+  while (lineEnd < html.length && (html[lineEnd] === ' ' || html[lineEnd] === '\t')) {
+    lineEnd++;
+  }
+  const startsLine = lineStart === 0 || html[lineStart - 1] === '\n';
+  const endsLine = lineEnd >= html.length || html[lineEnd] === '\n' || html[lineEnd] === '\r';
+  if (startsLine && endsLine) {
+    if (html[lineEnd] === '\r' && html[lineEnd + 1] === '\n') {
+      lineEnd += 2;
+    } else if (lineEnd < html.length) {
+      lineEnd += 1;
+    }
+    return { start: lineStart, end: lineEnd };
+  }
+  return { start, end };
 }

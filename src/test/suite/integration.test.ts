@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+﻿import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -57,7 +57,7 @@ async function cleanup(): Promise<void> {
 suite('Add Scene (integration)', () => {
   suiteSetup(async () => {
     removeFixtureDir();
-    const ext = vscode.extensions.getExtension('add-scene.add-scene');
+    const ext = vscode.extensions.getExtension('bricksphd01.cs2510-game-engine');
     if (ext && !ext.isActive) {
       await ext.activate();
     }
@@ -101,8 +101,8 @@ suite('Add Scene (integration)', () => {
       [
         'class myScene extends Scene{',
         '    constructor(){',
-        '        super()',
-        '        //Camera.main.backgroundColor = "white"',
+        '        super("white")',
+        '        //this.instantiate(new MainController())',
         '    }',
         '}',
         '',
@@ -147,8 +147,8 @@ suite('Add Scene (integration)', () => {
       [
         'class folderScene extends Scene{',
         '    constructor(){',
-        '        super()',
-        '        //Camera.main.backgroundColor = "white"',
+        '        super("white")',
+        '        //this.instantiate(new MainController())',
         '    }',
         '}',
         '',
@@ -297,6 +297,9 @@ suite('Add Scene (integration)', () => {
         'class myObject extends GameObject{',
         '    constructor(){',
         '        super("myObject", [], "default")',
+        "        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})",
+        '        //this.addComponent(new myObjectController)',
+        '        //this.transform.scale = new Vector2(1,1)',
         '    }',
         '}',
         '',
@@ -387,6 +390,9 @@ suite('Add Scene (integration)', () => {
         '    start(){',
         '        ',
         '    }',
+        '    update(){',
+        '        ',
+        '    }',
         '}',
         '',
       ].join('\n'),
@@ -448,4 +454,171 @@ suite('Add Scene (integration)', () => {
       `tag directly after the comment; got:\n${html}`
     );
   });
-});
+
+  test('Create New Game copies a template into a new folder, numbering on conflict', async () => {
+    const targetDir = path.join(FIXTURE_DIR, 'new-game');
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const run = () =>
+      vscode.commands.executeCommand(
+        'addScene.createNewGame',
+        vscode.Uri.file(targetDir),
+        'b'
+      );
+
+    await run();
+    assert.strictEqual(
+      fs.readFileSync(path.join(targetDir, 'b', 'index.html'), 'utf8'),
+      'Bye',
+      'template is copied into a folder named after it'
+    );
+
+    await run();
+    assert.strictEqual(
+      fs.readFileSync(path.join(targetDir, 'b2', 'index.html'), 'utf8'),
+      'Bye',
+      'existing folder name gets a numeric suffix'
+    );
+  });
+  test('Rename Class renames class, file, and script tags', async () => {
+    const scenesDir = path.join(FIXTURE_DIR, 'scenes');
+    fs.mkdirSync(scenesDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(scenesDir, 'Old.js'),
+      'class Old extends Scene{\n    constructor(){ super() }\n}\n',
+      'utf8'
+    );
+    const htmlUri = writeFixture(
+      'rename.html',
+      '<html>\n<body>\n<script src="scenes/Old.js"></script>\n<script src="scenes/Other.js"></script>\n</body>\n</html>\n'
+    );
+
+    await vscode.commands.executeCommand(
+      'addScene.renameClass',
+      vscode.Uri.file(path.join(scenesDir, 'Old.js')),
+      'Renamed'
+    );
+
+    assert.ok(!fs.existsSync(path.join(scenesDir, 'Old.js')), 'old file removed');
+    assert.ok(
+      fs.readFileSync(path.join(scenesDir, 'Renamed.js'), 'utf8').startsWith('class Renamed extends Scene{'),
+      `class renamed in the new file; got: ${JSON.stringify(fs.readFileSync(path.join(scenesDir, 'Renamed.js'), 'utf8'))}`
+    );
+    const html = fs.readFileSync(htmlUri.fsPath, 'utf8');
+    assert.ok(html.includes('<script src="scenes/Renamed.js"></script>'), `tag updated; got:\n${html}`);
+    assert.ok(html.includes('scenes/Other.js'), 'unrelated tag untouched');
+  });
+
+  test('Rename Class does nothing when the class does not match the file name', async () => {
+    const filePath = path.join(FIXTURE_DIR, 'Mismatch.js');
+    writeFixture('Mismatch.js', 'class Different{}\n');
+
+    await vscode.commands.executeCommand(
+      'addScene.renameClass',
+      vscode.Uri.file(filePath),
+      'Whatever'
+    );
+
+    assert.ok(fs.existsSync(filePath), 'file untouched');
+    assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'Whatever.js')));
+  });  test('Rename Class also updates the GameObject name string', async () => {
+    const dir = path.join(FIXTURE_DIR, 'gameObjects');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'Hero.js'),
+      'class Hero extends GameObject{\n    constructor(){\n        super("Hero", [], "default")\n        //this.addComponent(new HeroController)\n    }\n}\n',
+      'utf8'
+    );
+    writeFixture('go.html', '<html><body>\n<script src="gameObjects/Hero.js"></script>\n</body></html>');
+
+    await vscode.commands.executeCommand(
+      'addScene.renameClass',
+      vscode.Uri.file(path.join(dir, 'Hero.js')),
+      'Villain'
+    );
+
+    const content = fs.readFileSync(path.join(dir, 'Villain.js'), 'utf8');
+    assert.ok(content.includes('class Villain extends GameObject{'), `class renamed; got ${content}`);
+    assert.ok(content.includes('super("Villain", [], "default")'), `name string updated; got ${content}`);
+    assert.ok(content.includes('HeroController'), 'unrelated identifiers untouched');
+  });  test('Delete Class removes the file and its script tags', async () => {
+    const dir = path.join(FIXTURE_DIR, 'components');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'Gone.js'), 'class Gone extends Component{}\n', 'utf8');
+    const htmlUri = writeFixture(
+      'delete.html',
+      '<html>\n<body>\n  <script src="components/Gone.js"></script>\n  <script src="components/Keep.js"></script>\n</body>\n</html>\n'
+    );
+
+    await vscode.commands.executeCommand(
+      'addScene.deleteClass',
+      vscode.Uri.file(path.join(dir, 'Gone.js')),
+      true
+    );
+
+    assert.ok(!fs.existsSync(path.join(dir, 'Gone.js')), 'file deleted');
+    assert.strictEqual(
+      fs.readFileSync(htmlUri.fsPath, 'utf8'),
+      '<html>\n<body>\n  <script src="components/Keep.js"></script>\n</body>\n</html>\n',
+      'only the matching script tag line is removed'
+    );
+  });
+
+  test('Delete Class does nothing when the class does not match the file name', async () => {
+    const filePath = path.join(FIXTURE_DIR, 'Stay.js');
+    writeFixture('Stay.js', 'class Other{}\n');
+
+    await vscode.commands.executeCommand(
+      'addScene.deleteClass',
+      vscode.Uri.file(filePath),
+      true
+    );
+
+    assert.ok(fs.existsSync(filePath), 'file untouched');
+  });  test('Delete Component removes the file and its script tags', async () => {
+    const dir = path.join(FIXTURE_DIR, 'components');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'Spin.js'), 'class Spin extends Component{}\n', 'utf8');
+    const htmlUri = writeFixture(
+      'remove.html',
+      '<html>\n<body>\n  <script src="components/Spin.js"></script>\n</body>\n</html>\n'
+    );
+
+    await vscode.commands.executeCommand(
+      'addScene.deleteComponent',
+      vscode.Uri.file(path.join(dir, 'Spin.js')),
+      true
+    );
+
+    assert.ok(!fs.existsSync(path.join(dir, 'Spin.js')), 'file deleted');
+    assert.ok(!fs.readFileSync(htmlUri.fsPath, 'utf8').includes('Spin.js'), 'script tag removed');
+  });  test('Rename/Delete GameObject and Scene commands work', async () => {
+    const goDir = path.join(FIXTURE_DIR, 'gameObjects');
+    const sceneDir = path.join(FIXTURE_DIR, 'scenes');
+    fs.mkdirSync(goDir, { recursive: true });
+    fs.mkdirSync(sceneDir, { recursive: true });
+    fs.writeFileSync(path.join(goDir, 'Hero.js'), 'class Hero extends GameObject{}\n', 'utf8');
+    fs.writeFileSync(path.join(sceneDir, 'Level1.js'), 'class Level1 extends Scene{}\n', 'utf8');
+    const htmlUri = writeFixture(
+      'multi.html',
+      '<html>\n<body>\n  <script src="gameObjects/Hero.js"></script>\n  <script src="scenes/Level1.js"></script>\n</body>\n</html>\n'
+    );
+
+    await vscode.commands.executeCommand(
+      'addScene.renameGameObject',
+      vscode.Uri.file(path.join(goDir, 'Hero.js')),
+      'Villain'
+    );
+    assert.ok(fs.existsSync(path.join(goDir, 'Villain.js')), 'game object renamed');
+
+    await vscode.commands.executeCommand(
+      'addScene.deleteScene',
+      vscode.Uri.file(path.join(sceneDir, 'Level1.js')),
+      true
+    );
+    assert.ok(!fs.existsSync(path.join(sceneDir, 'Level1.js')), 'scene deleted');
+    assert.strictEqual(
+      fs.readFileSync(htmlUri.fsPath, 'utf8'),
+      '<html>\n<body>\n  <script src="gameObjects/Villain.js"></script>\n</body>\n</html>\n'
+    );
+  });});

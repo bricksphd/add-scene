@@ -1,55 +1,68 @@
-# Add Scene
+# CS2510 Game Engine
 
-A VS Code extension that adds an **Add Scene** command to the context menu of `.html` files.
+A VS Code extension that adds game-scaffolding commands to the Explorer context menu.
 
 ## Features
 
-- Right-click a `.html` file in the Explorer (or an open `.html` editor) and choose **Add Scene**, **Add Game Object**, or **Add Component**. The three options appear together in their own section of the context menu, separated from the other entries by a divider.
-- You are prompted for the name.
-- A new file `[name].js` is created:
-  - **Add Scene** — a scene class stub:
-    ```js
-    class myScene extends Scene{
-        constructor(){
-            super()
-            //Camera.main.backgroundColor = "white"
-        }
-    }
-    ```
-  - **Add Game Object** — a game object class stub:
-    ```js
-    class myObject extends GameObject{
-        constructor(){
-            super("myObject", [], "default")
-        }
-    }
-    ```
-  - **Add Component** — a component class stub:
-    ```js
-    class myComponent extends Component{
-        start(){
-            
-        }
-    }
-    ```
-  - It is placed in a `scenes` (resp. `gameObjects`, `components`) subfolder
-    when one exists next to the HTML file, otherwise next to the HTML file.
-- A `<script src="...">` element pointing at the new file is inserted:
-  - directly after an HTML comment containing **"Game-Specific Scenes"**
-    (resp. **"Game-Specific Game Objects"**, **"Game-Specific
-    Components"**), case-insensitive, when such a comment exists,
-  - otherwise just before the `</body>` tag of the HTML file.
-  The src points at `scenes/[name].js` (resp. `gameObjects/[name].js`,
-  `components/[name].js`) when the folder is used.
-- The new file is opened in the editor and receives keyboard focus.
+- Right-click a `.js` file and choose **Rename Class** to rename a class, its file, and the `<script src>` tags that reference it in one step. The menu reads **Rename Component**, **Rename GameObject**, or **Rename Scene** for files inside a `components`, `gameObjects`, or `scenes` folder. For a class that extends `GameObject`, a string passed as the first `super()` argument that equals the class name is renamed too. It only works when the file defines exactly one class and that class has the same name as the file; otherwise a message explains why nothing happened. HTML files are searched in the workspace folder (or, outside a workspace, the folder above the file's folder).
+- Right-click a `.js` file and choose **Delete Class** (shown as **Delete Component**, **Delete GameObject**, or **Delete Scene** for files inside a `components`, `gameObjects`, or `scenes` folder) to delete the file and remove every `<script src>` tag that references it (the whole line when the tag is alone on it). It asks for confirmation first and has the same one-class-named-like-the-file requirement as Rename Class.
+- Right-click a folder named `games` in the Explorer and choose **Create New Game**. Select a template from the folders in `templates/`; its contents are copied into a new folder of the same name inside the selected folder (`b`, or `b2`, `b3`, ... if that name is taken). Existing files are never overwritten.
+- Right-click a `.html` file in the Explorer (or an open `.html` editor) and choose **Add Scene**, **Add Game Object**, or **Add Component**. You are prompted for a name (a valid JavaScript identifier). The three options appear together in their own section of the context menu.
+  - A new `[name].js` class stub is created (extending `Scene`, `GameObject`, or `Component`). It is placed in a `scenes`, `gameObjects`, or `components` subfolder when one exists next to the HTML file, otherwise next to the HTML file.
+  - A `<script src="...">` tag for the new file is inserted directly after an HTML comment containing **"Game-Specific Scenes"**, **"Game-Specific Game Objects"**, or **"Game-Specific Components"** (case-insensitive) when one exists, otherwise just before `</body>`.
+  - The new file is opened in the editor and receives focus.
 
+Example stubs:
+
+```js
+class myScene extends Scene{
+    constructor(){
+        super("white")
+        //this.instantiate(new MainController())
+    }
+}
+
+class myObject extends GameObject{
+    constructor(){
+        super("myObject", [], "default")
+        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})
+        //this.addComponent(new myObjectController)
+        //this.transform.scale = new Vector2(1,1)
+    }
+}
+
+class myComponent extends Component{
+    start(){
+        
+    }
+    update(){
+        
+    }
+}
+```
 ## Usage
+
+To create a game from a template:
+
+1. Right-click a folder named `games` in the Explorer and select **Create New Game**.
+2. Select a template name. The template folder is copied into the selected
+   folder (numbered, e.g. `b2`, if the name already exists).
+
+To add a scene, game object, or component:
 
 1. Right-click a `.html` file.
 2. Select **Add Scene**, **Add Game Object**, or **Add Component**.
 3. Enter a name (a valid JavaScript identifier, e.g. `myScene`).
 4. The file is created (in the matching folder when present), the script
    tag is added to the HTML file, and the new file opens with focus.
+
+To rename or delete a class:
+
+1. Right-click a `.js` file that defines one class named like the file.
+2. Select **Rename Class** (or **Component**/**GameObject**/**Scene**) and
+   enter the new name, or select **Delete ...** and confirm.
+3. The class, file name, `super("Name")` string (GameObjects), and the
+   `<script src>` tags in HTML files are updated or removed.
 
 ## Development
 
@@ -60,32 +73,25 @@ npm test                # unit tests (mocha)
 npm run test:integration  # integration tests in a real VS Code instance
 ```
 
-### Running the extension (F5)
+### Running the extension
 
-Press `F5` ("Run Extension") to launch an Extension Development Host.
+Use **Ctrl+F5** (Run Without Debugging) to launch an Extension Development Host.
 
-> **VS Code 1.139.x bug:** F5 may hang with *"Extension host did not start in
-> 10 seconds"* and the extension's commands will do nothing. This is
-> [microsoft/vscode#338110](https://github.com/microsoft/vscode/issues/338110):
-> the built-in debugger attaches via `localhost`, which resolves IPv6-first
-> (`::1`), while the paused extension host inspector listens on `127.0.0.1`
-> only. Fixed in js-debug 1.140, which ships with **VS Code 1.140.0** —
-> updating VS Code resolves it.
->
-> Workarounds on 1.139.x:
-> 1. Use **Ctrl+F5** (Run Without Debugging) instead of F5 — the extension
->    host is not launched paused, so it starts normally.
-> 2. Or use the **"Attach to Extension Host (VS Code 1.139 workaround)"**
->    launch configuration, which launches the host with
->    `--inspect-extensions=9230` (no pause) and attaches to `127.0.0.1`
->    explicitly. Full debugging (breakpoints) works with this setup.
-
+> **F5 caveat:** On some VS Code versions (seen on 1.139 and 1.141) debugging
+> the extension host with **F5** fails: the new window opens and then closes,
+> or the host reports *"Extension host did not start in 10 seconds"*. This is
+> a VS Code debugger issue, not an extension bug. Use Ctrl+F5, or update VS
+> Code. The **"Attach to Extension Host (VS Code 1.139 workaround)"** launch configuration is another
+> option if you need breakpoints.
 A packaged `.vsix` can be installed via:
 ```bash
-code --install-extension add-scene-0.0.1.vsix
+code --install-extension cs2510-game-engine-0.0.1.vsix
 ```
 
 ## Notes
 
 - If the HTML file has no `</body>` tag, the script tag is appended at the end of the file.
-- The command is only shown for `.html` files (`resourceExtname == '.html'`).
+- The Add Scene, Add Game Object, and Add Component commands are only shown for `.html` files (`resourceExtname == '.html'`).
+- Create New Game is only shown when right-clicking a local folder named `games` in the Explorer. Template names come from the subfolders of `templates/`.
+- Rename/Delete commands are only shown for `.js` files. Their labels depend on the parent folder name (`components`, `gameObjects`, `scenes`), since menu conditions cannot read file contents.
+- Menu titles use emoji prefixes because VS Code ignores icons in context menus.
