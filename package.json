@@ -3,9 +3,35 @@
   "displayName": "CS2510 Game Engine",
   "icon": "media/icon.png",
   "publisher": "bricksphd01",
+  "author": "bricksphd",
   "repository": {
     "type": "git",
     "url": "https://github.com/bricksphd/add-scene"
+  },
+  "bugs": {
+    "url": "https://github.com/bricksphd/add-scene/issues"
+  },
+  "homepage": "https://github.com/bricksphd/add-scene#readme",
+  "keywords": [
+    "game",
+    "scaffold",
+    "scene",
+    "gameobject",
+    "component",
+    "cs2510",
+    "javascript",
+    "template"
+  ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "This extension creates, renames, and deletes files in your workspace."
+    }
   },
   "license": "MIT",
   "description": "Scaffold Scene, Game Object, and Component JS files from a .html file's context menu, with a matching <script> tag inserted automatically.",
@@ -137,14 +163,22 @@
     "pretest": "npm run compile",
     "test": "mocha",
     "test:unit": "mocha --spec out/test/unit/**/*.test.js",
-    "test:integration": "npm run pretest && node ./out/test/runTest.js"
+    "test:integration": "npm run pretest && node ./out/test/runTest.js",
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
     "@types/node": "20.x",
     "@types/vscode": "^1.85.0",
     "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^3.0.0",
+    "eslint": "^9.0.0",
     "mocha": "^10.4.0",
-    "typescript": "^5.4.5"
+    "prettier": "^3.3.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.0.0"
   }
 }

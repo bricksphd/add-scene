@@ -7,3 +7,13 @@ out/test/**
 testFixture/**
 **/*.map
 *.vsix
+.github/**
+TODOS.md
+tsconfig.json
+.mocharc.json
+.editorconfig
+.prettierrc.json
+eslint.config.mjs
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md

@@ -1,6 +1,9 @@
-# CS2510 Game Engine
+﻿# CS2510 Game Engine
 
-A VS Code extension that adds game-scaffolding commands to the Explorer context menu.
+[![CI](https://github.com/bricksphd/add-scene/actions/workflows/ci.yml/badge.svg)](https://github.com/bricksphd/add-scene/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A VS Code extension that adds game-scaffolding commands to the Explorer context menu. It scaffolds Scenes, Game Objects, and Components for the CS2510 JavaScript game engine (the engine is bundled in the `templates/` game templates), keeping `<script>` tags in sync as you create, rename, and delete classes.
 
 ## Features
 
@@ -25,8 +28,8 @@ class myScene extends Scene{
 class myObject extends GameObject{
     constructor(){
         super("myObject", [], "default")
-        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})
-        //this.addComponent(new myObjectController)
+        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Assets.triangle})
+        //this.addComponent(new myObjectController())
         //this.transform.scale = new Vector2(1,1)
     }
 }
@@ -64,26 +67,10 @@ To rename or delete a class:
 3. The class, file name, `super("Name")` string (GameObjects), and the
    `<script src>` tags in HTML files are updated or removed.
 
-## Development
+## Install
 
-```bash
-npm install
-npm run compile         # TypeScript -> out/
-npm test                # unit tests (mocha)
-npm run test:integration  # integration tests in a real VS Code instance
-```
+Install from the VS Code Marketplace, or from a downloaded `.vsix`:
 
-### Running the extension
-
-Use **Ctrl+F5** (Run Without Debugging) to launch an Extension Development Host.
-
-> **F5 caveat:** On some VS Code versions (seen on 1.139 and 1.141) debugging
-> the extension host with **F5** fails: the new window opens and then closes,
-> or the host reports *"Extension host did not start in 10 seconds"*. This is
-> a VS Code debugger issue, not an extension bug. Use Ctrl+F5, or update VS
-> Code. The **"Attach to Extension Host (VS Code 1.139 workaround)"** launch configuration is another
-> option if you need breakpoints.
-A packaged `.vsix` can be installed via:
 ```bash
 code --install-extension cs2510-game-engine-0.0.1.vsix
 ```
@@ -95,3 +82,15 @@ code --install-extension cs2510-game-engine-0.0.1.vsix
 - Create New Game is only shown when right-clicking a local folder named `games` in the Explorer. Template names come from the subfolders of `templates/`.
 - Rename/Delete commands are only shown for `.js` files. Their labels depend on the parent folder name (`components`, `gameObjects`, `scenes`), since menu conditions cannot read file contents.
 - Menu titles use emoji prefixes because VS Code ignores icons in context menus.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests, and how to run the extension. Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
+## Privacy
+
+No telemetry is collected and no network requests are made.
+
+## License
+
+[MIT](LICENSE)
