@@ -35,7 +35,7 @@
   },
   "license": "MIT",
   "description": "Scaffold Scene, Game Object, and Component JS files from a .html file's context menu, with a matching <script> tag inserted automatically.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -65,14 +65,38 @@
         "command": "addScene.createNewGame",
         "title": "🎮 Create New Game"
       },
-      { "command": "addScene.deleteClass", "title": "🗑️ Delete Class" },
-      { "command": "addScene.deleteComponent", "title": "🗑️ Delete Component" },
-      { "command": "addScene.deleteGameObject", "title": "🗑️ Delete GameObject" },
-      { "command": "addScene.deleteScene", "title": "🗑️ Delete Scene" },
-      { "command": "addScene.renameClass", "title": "✏️ Rename Class" },
-      { "command": "addScene.renameComponent", "title": "✏️ Rename Component" },
-      { "command": "addScene.renameGameObject", "title": "✏️ Rename GameObject" },
-      { "command": "addScene.renameScene", "title": "✏️ Rename Scene" }
+      {
+        "command": "addScene.deleteClass",
+        "title": "🗑️ Delete Class"
+      },
+      {
+        "command": "addScene.deleteComponent",
+        "title": "🗑️ Delete Component"
+      },
+      {
+        "command": "addScene.deleteGameObject",
+        "title": "🗑️ Delete GameObject"
+      },
+      {
+        "command": "addScene.deleteScene",
+        "title": "🗑️ Delete Scene"
+      },
+      {
+        "command": "addScene.renameClass",
+        "title": "✏️ Rename Class"
+      },
+      {
+        "command": "addScene.renameComponent",
+        "title": "✏️ Rename Component"
+      },
+      {
+        "command": "addScene.renameGameObject",
+        "title": "✏️ Rename GameObject"
+      },
+      {
+        "command": "addScene.renameScene",
+        "title": "✏️ Rename Scene"
+      }
     ],
     "menus": {
       "explorer/context": [
@@ -122,36 +146,36 @@
           "group": "1_addScene@4"
         },
         {
-        "command": "addScene.addScene",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@1"
+          "command": "addScene.addScene",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@1"
         },
         {
-        "command": "addScene.addGameObject",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@2"
+          "command": "addScene.addGameObject",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@2"
         },
         {
-        "command": "addScene.addComponent",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@3"
+          "command": "addScene.addComponent",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@3"
         }
       ],
       "editor/context": [
         {
-        "command": "addScene.addScene",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@1"
+          "command": "addScene.addScene",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@1"
         },
         {
-        "command": "addScene.addGameObject",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@2"
+          "command": "addScene.addGameObject",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@2"
         },
         {
-        "command": "addScene.addComponent",
-        "when": "resourceExtname == .html",
-        "group": "1_addScene@3"
+          "command": "addScene.addComponent",
+          "when": "resourceExtname == .html",
+          "group": "1_addScene@3"
         }
       ]
     }

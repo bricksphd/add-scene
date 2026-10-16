@@ -463,20 +463,24 @@ suite('Add Scene (integration)', () => {
       vscode.commands.executeCommand(
         'addScene.createNewGame',
         vscode.Uri.file(targetDir),
-        'b'
+        'empty'
       );
+    const templateHtml = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'templates', 'empty', 'index.html'),
+      'utf8'
+    );
 
     await run();
     assert.strictEqual(
-      fs.readFileSync(path.join(targetDir, 'b', 'index.html'), 'utf8'),
-      'Bye',
+      fs.readFileSync(path.join(targetDir, 'empty', 'index.html'), 'utf8'),
+      templateHtml,
       'template is copied into a folder named after it'
     );
 
     await run();
     assert.strictEqual(
-      fs.readFileSync(path.join(targetDir, 'b2', 'index.html'), 'utf8'),
-      'Bye',
+      fs.readFileSync(path.join(targetDir, 'empty2', 'index.html'), 'utf8'),
+      templateHtml,
       'existing folder name gets a numeric suffix'
     );
   });

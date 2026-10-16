@@ -5,8 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.2]
+
 ### Added
+- New `empty` game template (blank `index.html`, `Assets.js`, `Globals.js`, `Settings.js`, `jsconfig.json`).
 - CI workflow, ESLint, Prettier, and contribution documentation.
+- Extension metadata (keywords, bugs, homepage) and workspace-trust capabilities.
+
+### Removed
+- Placeholder `a` and `b` templates.
 
 ## [0.0.1]
 
