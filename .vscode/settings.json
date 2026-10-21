@@ -1,0 +1,7 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npm run compile": true,
+        "npm run lint": true,
+        "npm run test:unit": true
+    }
+}
