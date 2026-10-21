@@ -10,6 +10,7 @@ testFixture/**
 .github/**
 TODOS.md
 tsconfig.json
+jsconfig.json
 .mocharc.json
 .editorconfig
 .prettierrc.json

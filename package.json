@@ -1,7 +1,7 @@
 {
   "name": "cs2510-game-engine",
   "displayName": "CS2510 Game Engine",
-  "icon": "media/icon.png",
+  "icon": "media/NESLego.png",
   "publisher": "bricksphd01",
   "author": "bricksphd",
   "repository": {
@@ -35,7 +35,7 @@
   },
   "license": "MIT",
   "description": "Scaffold Scene, Game Object, and Component JS files from a .html file's context menu, with a matching <script> tag inserted automatically.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -142,7 +142,7 @@
         },
         {
           "command": "addScene.createNewGame",
-          "when": "explorerResourceIsFolder && resourceScheme == file && resourceFilename == games",
+          "when": "explorerResourceIsFolder && resourceScheme == file",
           "group": "1_addScene@4"
         },
         {

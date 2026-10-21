@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-10-21
+
+### Added
+- New `square` game template with a square game object, controller, and main scene.
+
+### Changed
+- **Create New Game** is now available from any local folder, not only folders named `games`.
+- Set the extension icon to `media/NESLego.png`.
+- Simplified the `empty` template starter HTML and added normalized triangle and square assets.
+
+### Fixed
+- Added a root `jsconfig.json` so the templates' `jsconfig.json` files (which extend `../../jsconfig.json`) resolve when this repo is opened in VS Code.
+
 ## [0.0.2]
 
 ### Added
