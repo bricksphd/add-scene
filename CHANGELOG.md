@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-10-28
+
+### Added
+- New `platformer` game template with a platform game object and square controller.
+- New `top-down` game template.
+
+### Changed
+- Updated the `empty` and `square` template starter files.
+
+### Removed
+- The `class` (space shooter) template.
+
 ## [0.0.3] - 2026-10-21
 
 ### Added
