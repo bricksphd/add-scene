@@ -1,0 +1,10 @@
+class {{name}} extends GameObject{
+    constructor(){
+        super("{{name}}", [], "default")
+        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Assets.triangle})
+        //this.addComponent(new Collider())
+        //this.addComponent(new RigidBody())
+        //this.addComponent(new {{name}}Controller)
+        //this.transform.scale = new Vector2(1,1)
+    }
+}

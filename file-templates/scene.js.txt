@@ -1,0 +1,6 @@
+class {{name}} extends Scene{
+    constructor(){
+        super("white")
+        //this.instantiate(new MainController())
+    }
+}

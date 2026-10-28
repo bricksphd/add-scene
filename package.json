@@ -35,7 +35,7 @@
   },
   "license": "MIT",
   "description": "Scaffold Scene, Game Object, and Component JS files from a .html file's context menu, with a matching <script> tag inserted automatically.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -147,17 +147,17 @@
         },
         {
           "command": "addScene.addScene",
-          "when": "resourceExtname == .html",
+          "when": "resourceExtname == .html || (explorerResourceIsFolder && resourceFilename == scenes)",
           "group": "1_addScene@1"
         },
         {
           "command": "addScene.addGameObject",
-          "when": "resourceExtname == .html",
+          "when": "resourceExtname == .html || (explorerResourceIsFolder && resourceFilename == gameObjects)",
           "group": "1_addScene@2"
         },
         {
           "command": "addScene.addComponent",
-          "when": "resourceExtname == .html",
+          "when": "resourceExtname == .html || (explorerResourceIsFolder && resourceFilename == components)",
           "group": "1_addScene@3"
         }
       ],

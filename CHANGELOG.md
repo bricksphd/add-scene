@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-10-28
+
+### Added
+- "Add Scene", "Add Game Object" and "Add Component" now appear when right-clicking the `scenes`, `gameObjects` and `components` folders.
+- New-file contents are read from editable templates in `file-templates/`.
+
+### Changed
+- Minor update to the `top-down` template's `SquareGameObject.js`.
+
 ## [0.0.4] - 2026-10-28
 
 ### Added

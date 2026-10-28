@@ -550,9 +550,33 @@ function entityJsPath(
   return path.join(entityTargetDir(kind, htmlUri), `${name}.js`);
 }
 
+/** Finds the game's HTML file for a game folder or its scenes/gameObjects/components subfolder. */
+function findHtmlForFolder(folderPath: string): string | undefined {
+  try {
+    if (!fs.statSync(folderPath).isDirectory()) {
+      return undefined;
+    }
+    const base = path.basename(folderPath);
+    const dir = ['scenes', 'gameObjects', 'components'].includes(base)
+      ? path.dirname(folderPath)
+      : folderPath;
+    const htmlFiles = fs.readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.html'));
+    const html = htmlFiles.find((f) => f.toLowerCase() === 'index.html') ?? htmlFiles[0];
+    return html ? path.join(dir, html) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function resolveHtmlUri(uri?: vscode.Uri): vscode.Uri | undefined {
   if (uri && uri.scheme === 'file' && uri.path.toLowerCase().endsWith('.html')) {
     return uri;
+  }
+  if (uri && uri.scheme === 'file') {
+    const fromFolder = findHtmlForFolder(uri.fsPath);
+    if (fromFolder) {
+      return vscode.Uri.file(fromFolder);
+    }
   }
   const activeEditor = vscode.window.activeTextEditor;
   if (

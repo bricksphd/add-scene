@@ -3,6 +3,18 @@
  * Kept separate so it can be unit-tested without launching VS Code.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
+/** Folder (at the extension root) holding the editable new-file templates. */
+const FILE_TEMPLATES_DIR = path.join(__dirname, '..', 'file-templates');
+
+/** Reads a template from file-templates/ and replaces every {{name}}. */
+function renderFileTemplate(fileName: string, name: string): string {
+  const text = fs.readFileSync(path.join(FILE_TEMPLATES_DIR, fileName), 'utf8');
+  return text.replace(/\r\n/g, '\n').split('{{name}}').join(name);
+}
+
 /** Matches a valid JavaScript identifier (scene name). */
 const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
@@ -199,49 +211,21 @@ export function insertScriptTag(html: string, src: string, marker?: string): str
  * Builds the contents for a new scene JS file.
  */
 export function buildSceneFileContent(name: string): string {
-  return [
-    `class ${name} extends Scene{`,
-    '    constructor(){',
-    '        super("white")',
-    '        //this.instantiate(new MainController())',
-    '    }',
-    '}',
-    '',
-  ].join('\n');
+  return renderFileTemplate('scene.js.txt', name);
 }
 
 /**
  * Builds the contents for a new game object JS file.
  */
 export function buildGameObjectFileContent(name: string): string {
-  return [
-    `class ${name} extends GameObject{`,
-    '    constructor(){',
-    `        super("${name}", [], "default")`,
-    `        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})`,
-    `        //this.addComponent(new ${name}Controller)`,
-    `        //this.transform.scale = new Vector2(1,1)`,
-    '    }',
-    '}',
-    '',
-  ].join('\n');
+  return renderFileTemplate('gameObject.js.txt', name);
 }
 
 /**
  * Builds the contents for a new component JS file.
  */
 export function buildComponentFileContent(name: string): string {
-  return [
-    `class ${name} extends Component{`,
-    '    start(){',
-    '        ',
-    '    }',
-    '    update(){',
-    '        ',
-    '    }',
-    '}',
-    '',
-  ].join('\n');
+  return renderFileTemplate('component.js.txt', name);
 }
 
 /** A class declaration found in JavaScript source. */
