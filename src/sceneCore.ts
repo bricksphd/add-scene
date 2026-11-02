@@ -357,3 +357,116 @@ export function planScriptTagRemoval(
   }
   return { start, end };
 }
+
+/** Finds the nearest ancestor folder (starting at startDir) that contains an `engine` folder. */
+export function findEngineDir(startDir: string): string | undefined {
+  let dir = path.resolve(startDir);
+  for (;;) {
+    const candidate = path.join(dir, 'engine');
+    try {
+      if (fs.statSync(candidate).isDirectory()) {
+        return candidate;
+      }
+    } catch {
+      // keep walking up
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
+}
+
+/** Lists the .js files directly inside a folder, sorted by name. */
+function listJsFiles(dir: string): string[] {
+  try {
+    return fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.js'))
+      .map((e) => e.name)
+      .sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Returns the html with script tags added for every engine/*.js and
+ * engine/components/*.js file that is not yet referenced. Missing tags are
+ * inserted after the last existing tag for the same engine folder.
+ */
+export function addMissingEngineScripts(
+  html: string,
+  htmlDir: string,
+  engineDir: string
+): { html: string; added: string[] } {
+  const norm = (p: string) => path.resolve(p).toLowerCase();
+  const refs = findScriptSrcRefs(html);
+  const referenced = new Set(
+    refs.filter((r) => !/^[a-z]+:|^\/\//i.test(r.value)).map((r) => norm(path.resolve(htmlDir, r.value.split(/[?#]/)[0])))
+  );
+  const engineNorm = norm(engineDir);
+  const componentsNorm = norm(path.join(engineDir, 'components'));
+
+  let prefix = path.relative(htmlDir, engineDir).split(path.sep).join('/');
+  if (!prefix.startsWith('.')) {
+    prefix = `./${prefix}`;
+  }
+
+  const groups = [
+    { dir: engineDir, dirNorm: engineNorm, rel: prefix },
+    { dir: path.join(engineDir, 'components'), dirNorm: componentsNorm, rel: `${prefix}/components` },
+  ].map((g) => ({
+    ...g,
+    missing: listJsFiles(g.dir).filter((f) => !referenced.has(norm(path.join(g.dir, f)))),
+    last: undefined as ScriptSrcRef | undefined,
+  }));
+
+  const isEngine = (r: ScriptSrcRef) => {
+    const p = norm(path.resolve(htmlDir, r.value.split(/[?#]/)[0]));
+    return p === engineNorm || p.startsWith(engineNorm + path.sep);
+  };
+  const lastOf = (list: ScriptSrcRef[]) => list.reduce<ScriptSrcRef | undefined>((a, r) => (!a || r.start > a.start ? r : a), undefined);
+  const engineRefs = refs.filter(isEngine);
+  for (const g of groups) {
+    g.last = lastOf(engineRefs.filter((r) => norm(path.dirname(path.resolve(htmlDir, r.value.split(/[?#]/)[0]))) === g.dirNorm));
+  }
+  const anyEngineLast = lastOf(engineRefs);
+
+  const eol = html.includes('\r\n') ? '\r\n' : '\n';
+  const added: string[] = [];
+  const inserts: { offset: number; text: string; order: number }[] = [];
+  groups.forEach((g, order) => {
+    if (g.missing.length === 0) {
+      return;
+    }
+    // Components with no existing tags go after the last engine tag (or after top-level insertions).
+    const anchor = g.last ?? (order === 1 ? anyEngineLast : undefined);
+    let offset: number;
+    let indent: string;
+    if (anchor) {
+      const lineEnd = html.indexOf('\n', anchor.start);
+      offset = lineEnd === -1 ? html.length : lineEnd + 1;
+      const lineStart = html.lastIndexOf('\n', anchor.start) + 1;
+      indent = /^[ \t]*/.exec(html.slice(lineStart, anchor.start))?.[0] ?? '';
+    } else {
+      offset = findScriptInsertOffset(html);
+      indent = getBodyIndent(html);
+    }
+    let text = '';
+    for (const f of g.missing) {
+      const src = `${g.rel}/${f}`;
+      added.push(src);
+      text += buildScriptTag(src, indent, eol);
+    }
+    inserts.push({ offset, text, order });
+  });
+
+  let result = html;
+  inserts.sort((a, b) => b.offset - a.offset || b.order - a.order);
+  for (const ins of inserts) {
+    result = result.slice(0, ins.offset) + ins.text + result.slice(ins.offset);
+  }
+  return { html: result, added };
+}

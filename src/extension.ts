@@ -2,6 +2,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import {
+  addMissingEngineScripts,
+  findEngineDir,
   validateSceneName,
   findClassDeclarations,
   findGameObjectNameString,
@@ -68,6 +70,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerAddEntityCommand(GAME_OBJECT),
     registerAddEntityCommand(COMPONENT),
     registerCreateNewGameCommand(context),
+    registerUpdateEngineReferencesCommand(),
     ...[
       ['Class', 'Class'],
       ['Component', 'Component'],
@@ -81,6 +84,42 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
+
+function registerUpdateEngineReferencesCommand(): vscode.Disposable {
+  return vscode.commands.registerCommand(
+    'addScene.updateEngineReferences',
+    async (uri?: vscode.Uri) => {
+      const htmlUri = resolveHtmlUri(uri);
+      if (!htmlUri) {
+        vscode.window.showErrorMessage('Select an HTML file to update.');
+        return;
+      }
+      const htmlDir = path.dirname(htmlUri.fsPath);
+      const engineDir = findEngineDir(htmlDir);
+      if (!engineDir) {
+        vscode.window.showErrorMessage('Could not find an "engine" folder in the project root.');
+        return;
+      }
+      const doc = await vscode.workspace.openTextDocument(htmlUri);
+      const { html, added } = addMissingEngineScripts(doc.getText(), htmlDir, engineDir);
+      if (added.length === 0) {
+        vscode.window.showInformationMessage('Engine references are already up to date.');
+        return;
+      }
+      const edit = new vscode.WorkspaceEdit();
+      edit.replace(
+        htmlUri,
+        new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length)),
+        html
+      );
+      await vscode.workspace.applyEdit(edit);
+      await doc.save();
+      vscode.window.showInformationMessage(
+        `Added ${added.length} engine reference${added.length === 1 ? '' : 's'}.`
+      );
+    }
+  );
+}
 
 function registerCreateNewGameCommand(
   context: vscode.ExtensionContext

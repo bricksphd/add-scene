@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- "Update Engine References" option on HTML files: finds the project's `engine` folder and adds script tags for any missing `engine/*.js` and `engine/components/*.js` files after the existing engine tags.
+
 ## [0.0.5] - 2026-10-28
 
 ### Added

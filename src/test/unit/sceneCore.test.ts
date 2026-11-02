@@ -1,4 +1,4 @@
-﻿import * as assert from 'assert';
+import * as assert from 'assert';
 import {
   validateSceneName,
   findClassDeclarations,
@@ -17,7 +17,12 @@ import {
   buildComponentFileContent,
   GAME_OBJECT_COMMENT_MARKER,
   COMPONENT_COMMENT_MARKER,
+  findEngineDir,
+  addMissingEngineScripts,
 } from '../../sceneCore';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 suite('validateSceneName', () => {
   test('accepts valid identifiers', () => {
@@ -287,7 +292,9 @@ suite('buildGameObjectFileContent', () => {
         'class myObject extends GameObject{',
         '    constructor(){',
         '        super("myObject", [], "default")',
-        "        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Asssets.triangle})",
+        "        //this.addComponent(new Polygon(), {fillStyle: 'magenta', points: Assets.triangle})",
+        '        //this.addComponent(new Collider())',
+        '        //this.addComponent(new RigidBody())',
         '        //this.addComponent(new myObjectController)',
         '        //this.transform.scale = new Vector2(1,1)',
         '    }',
@@ -501,6 +508,114 @@ suite('planScriptTagRemoval', () => {
     assert.strictEqual(
       remove('<p>x</p><script src="a.js"></script><p>y</p>'),
       '<p>x</p><p>y</p>'
+    );
+  });
+});
+
+suite('engine references', () => {
+  let root: string;
+  let gameDir: string;
+  let engineDir: string;
+
+  const touch = (dir: string, names: string[]) => {
+    fs.mkdirSync(dir, { recursive: true });
+    names.forEach((n) => fs.writeFileSync(path.join(dir, n), ''));
+  };
+
+  setup(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'engine-refs-'));
+    engineDir = path.join(root, 'engine');
+    gameDir = path.join(root, 'games', 'g');
+    fs.mkdirSync(gameDir, { recursive: true });
+  });
+
+  teardown(() => {
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  const page = (eol = '\n') =>
+    [
+      '<body>',
+      '    <script src="../../engine/A.js"></script>',
+      '    <script src="../../engine/components/X.js"></script>',
+      '    <!-- Game-specific scenes -->',
+      '    <script src="./scenes/Main.js"></script>',
+      '</body>',
+      '',
+    ].join(eol);
+
+  test('findEngineDir walks up to the engine folder', () => {
+    touch(engineDir, ['A.js']);
+    assert.strictEqual(findEngineDir(gameDir), engineDir);
+  });
+
+  test('findEngineDir returns undefined when absent', () => {
+    assert.strictEqual(findEngineDir(gameDir), undefined);
+  });
+
+  test('adds missing engine and component scripts after existing tags', () => {
+    touch(engineDir, ['A.js', 'B.js']);
+    touch(path.join(engineDir, 'components'), ['X.js', 'Y.js']);
+    const { html, added } = addMissingEngineScripts(page(), gameDir, engineDir);
+    assert.deepStrictEqual(added, ['../../engine/B.js', '../../engine/components/Y.js']);
+    assert.strictEqual(
+      html,
+      [
+        '<body>',
+        '    <script src="../../engine/A.js"></script>',
+        '    <script src="../../engine/B.js"></script>',
+        '    <script src="../../engine/components/X.js"></script>',
+        '    <script src="../../engine/components/Y.js"></script>',
+        '    <!-- Game-specific scenes -->',
+        '    <script src="./scenes/Main.js"></script>',
+        '</body>',
+        '',
+      ].join('\n')
+    );
+  });
+
+  test('is a no-op when everything is referenced', () => {
+    touch(engineDir, ['A.js']);
+    touch(path.join(engineDir, 'components'), ['X.js']);
+    const result = addMissingEngineScripts(page(), gameDir, engineDir);
+    assert.deepStrictEqual(result.added, []);
+    assert.strictEqual(result.html, page());
+  });
+
+  test('ignores non-js files and nested folders other than components', () => {
+    touch(engineDir, ['A.js', 'notes.txt']);
+    touch(path.join(engineDir, 'other'), ['Z.js']);
+    assert.deepStrictEqual(addMissingEngineScripts(page(), gameDir, engineDir).added, []);
+  });
+
+  test('recognizes differently written paths to the same file', () => {
+    touch(engineDir, ['A.js']);
+    const html = '<body>\n<script src="../../engine/./A.js?v=1"></script>\n</body>\n';
+    assert.deepStrictEqual(addMissingEngineScripts(html, gameDir, engineDir).added, []);
+  });
+
+  test('preserves CRLF line endings', () => {
+    touch(engineDir, ['A.js', 'B.js']);
+    const { html } = addMissingEngineScripts(page('\r\n'), gameDir, engineDir);
+    assert.ok(html.includes('B.js"></script>\r\n'));
+    assert.ok(!/[^\r]\n/.test(html));
+  });
+
+  test('inserts before </body> when no engine tags exist', () => {
+    touch(engineDir, ['A.js']);
+    const html = '<body>\n    <script src="./Main.js"></script>\n</body>\n';
+    const result = addMissingEngineScripts(html, gameDir, engineDir);
+    assert.deepStrictEqual(result.added, ['../../engine/A.js']);
+    assert.ok(result.html.endsWith('\n<script src="../../engine/A.js"></script>\n</body>\n'));
+  });
+
+  test('adds components after last engine tag when none exist yet', () => {
+    touch(engineDir, ['A.js']);
+    touch(path.join(engineDir, 'components'), ['X.js']);
+    const html = '<body>\n  <script src="../../engine/A.js"></script>\n  <script src="./Main.js"></script>\n</body>\n';
+    const { html: out } = addMissingEngineScripts(html, gameDir, engineDir);
+    assert.ok(
+      out.includes('A.js"></script>\n  <script src="../../engine/components/X.js"></script>\n  <script src="./Main.js')
     );
   });
 });
